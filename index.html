@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0F172A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Farbton">
+  <meta name="description" content="Mobiler Farbton- und RAL-Erkenner mit Echtzeit-Kamera, Fotoanalyse und Farbwerten.">
+  
+  <title>Farbton-Erkenner | Mobile Farbanalyse & RAL</title>
+  
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <link rel="manifest" href="manifest.json">
+  
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="theme-dark">
+  <div id="app" class="app-container">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="header-logo">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" stroke="url(#headerGrad)"/>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="url(#headerGrad)"/>
+            <circle cx="12" cy="12" r="3" fill="#3B82F6"/>
+            <defs>
+              <linearGradient id="headerGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#3B82F6"/>
+                <stop offset="50%" stop-color="#8B5CF6"/>
+                <stop offset="100%" stop-color="#EC4899"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="header-titles">
+          <h1 class="header-title">Farbton-Erkenner</h1>
+          <span class="header-subtitle">Echtzeit RAL & Farbanalyse</span>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <button id="btn-torch" class="icon-btn" title="Taschenlampe" style="display: none;">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L14 2H10L6 6v3l3 3v8h6v-8l3-3V6z"/>
+            <line x1="12" y1="2" x2="12" y2="6"/>
+          </svg>
+        </button>
+        <button id="btn-info" class="icon-btn" title="Tipps & Info">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="nav-tabs" role="tablist">
+      <button class="nav-tab active" data-tab="camera" role="tab" aria-selected="true">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        <span>Kamera</span>
+      </button>
+      <button class="nav-tab" data-tab="photo" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        <span>Foto</span>
+      </button>
+      <button class="nav-tab" data-tab="picker" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v20M2 12h20"/>
+          <circle cx="12" cy="12" r="8"/>
+        </svg>
+        <span>RAL-Katalog</span>
+      </button>
+      <button class="nav-tab" data-tab="saved" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+        </svg>
+        <span>Gespeichert</span>
+        <span id="saved-counter" class="badge">0</span>
+      </button>
+    </nav>
+
+    <!-- Main Viewport Content -->
+    <main class="main-content">
+      
+      <!-- ================= CAMERA VIEW ================= -->
+      <section id="view-camera" class="view-panel active">
+        <div class="camera-viewport-card">
+          <div class="video-wrapper" id="video-wrapper">
+            <video id="camera-video" playsinline webkit-playsinline autoplay muted></video>
+            <canvas id="camera-canvas" class="hidden-canvas"></canvas>
+
+            <!-- Aiming Reticle (Crosshair) -->
+            <div id="camera-reticle" class="reticle">
+              <div class="reticle-ring"></div>
+              <div class="reticle-dot"></div>
+              <div class="reticle-axis-x"></div>
+              <div class="reticle-axis-y"></div>
+            </div>
+
+            <!-- Floating Mini Loupe / Zoom Bubble -->
+            <div id="mini-loupe" class="mini-loupe">
+              <canvas id="loupe-canvas" width="64" height="64"></canvas>
+              <div class="loupe-swatch" id="loupe-swatch"></div>
+            </div>
+
+            <!-- Camera Notice / Permission Overlay -->
+            <div id="camera-permission-overlay" class="camera-overlay">
+              <div class="overlay-content">
+                <div class="overlay-icon">📷</div>
+                <h3>Kamera für Farberkennung</h3>
+                <p>Ermöglicht das Live-Scannen von Wandfarben, Textilien, Lacken und Gegenständen.</p>
+                <button id="btn-start-camera" class="btn btn-primary btn-lg">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/>
+                  </svg>
+                  Kamera starten
+                </button>
+                <button id="btn-demo-mode" class="btn btn-ghost btn-sm" style="margin-top: 10px;">
+                  Oder Muster-Farben testen
+                </button>
+              </div>
+            </div>
+
+            <!-- Paused Badge -->
+            <div id="camera-frozen-badge" class="frozen-badge" style="display: none;">
+              ⏸️ Bild angehalten
+            </div>
+          </div>
+
+          <!-- Camera Controls Bar -->
+          <div class="camera-controls">
+            <!-- Sample Averaging Mode -->
+            <div class="sample-radius-group">
+              <span class="ctrl-label">Messpunkt:</span>
+              <div class="radio-pill-group">
+                <button class="pill-btn" data-radius="1" title="Einzelner Pixel">1px</button>
+                <button class="pill-btn active" data-radius="5" title="Mittelwert 5x5 Pixel">5px Mittel</button>
+                <button class="pill-btn" data-radius="15" title="Fläche 15x15 Pixel">15px Fläche</button>
+              </div>
+            </div>
+
+            <div class="action-buttons-row">
+              <button id="btn-flip-camera" class="round-btn secondary" title="Kamera wechseln">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="4 20 1 17 4 14"/>
+                  <path d="M4 8V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/>
+                  <polyline points="20 4 23 7 20 10"/>
+                </svg>
+              </button>
+
+              <!-- Main Capture Trigger -->
+              <button id="btn-capture-color" class="capture-trigger-btn" title="Farbe erfassen">
+                <div class="capture-inner" id="capture-indicator"></div>
+              </button>
+
+              <button id="btn-freeze-camera" class="round-btn secondary" title="Bild anhalten / fortsetzen">
+                <svg id="freeze-icon-pause" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                  <rect x="6" y="4" width="4" height="16"/>
+                  <rect x="14" y="4" width="4" height="16"/>
+                </svg>
+                <svg id="freeze-icon-play" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" style="display: none;">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+              </button>
+            </div>
+            
+            <p class="camera-hint">Tippe auf das Videobild, um das Fadenkreuz zu verschieben.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PHOTO VIEW ================= -->
+      <section id="view-photo" class="view-panel">
+        <div class="photo-card">
+          <div class="photo-upload-area" id="photo-drop-zone">
+            <input type="file" id="photo-file-input" accept="image/*" class="file-input-hidden">
+            
+            <div id="photo-empty-state" class="upload-empty-state">
+              <div class="upload-icon">
+                <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </div>
+              <h3>Foto analysieren</h3>
+              <p>Wähle ein Bild aus deiner Galerie oder nimm ein neues Foto auf.</p>
+              
+              <div class="upload-buttons">
+                <button id="btn-select-file" class="btn btn-primary">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  Foto auswählen
+                </button>
+              </div>
+            </div>
+
+            <!-- Canvas Container for image inspection -->
+            <div id="photo-canvas-container" class="photo-canvas-container" style="display: none;">
+              <canvas id="photo-canvas"></canvas>
+              <div id="photo-reticle" class="photo-reticle">
+                <div class="photo-reticle-ring"></div>
+                <div class="photo-reticle-dot"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Photo Actions -->
+          <div id="photo-controls" class="photo-controls" style="display: none;">
+            <div class="photo-ctrl-header">
+              <span class="ctrl-label">Fahre mit dem Finger über das Foto zum Auswählen.</span>
+              <button id="btn-change-photo" class="btn btn-ghost btn-xs">Anderes Foto</button>
+            </div>
+            
+            <!-- Extracted Palette Section -->
+            <div class="dominant-palette-section">
+              <h4>Extrahierte Hauptfarbtöne:</h4>
+              <div id="dominant-colors-grid" class="dominant-grid">
+                <!-- Dynamisch befüllt -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PICKER & RAL CATALOG VIEW ================= -->
+      <section id="view-picker" class="view-panel">
+        <div class="ral-catalog-card">
+          <!-- Live Manual Color Input -->
+          <div class="manual-picker-box">
+            <div class="picker-header">
+              <h3>Manuelle Farbton-Wahl</h3>
+              <div class="color-input-wrapper">
+                <input type="color" id="native-color-picker" value="#3481B8" class="color-picker-bubble">
+                <input type="text" id="manual-hex-input" value="#3481B8" maxlength="7" class="hex-text-input" placeholder="#RRGGBB">
+              </div>
+            </div>
+
+            <!-- Sliders for RGB -->
+            <div class="sliders-container">
+              <div class="slider-row">
+                <span class="slider-tag red">R: <span id="val-r">52</span></span>
+                <input type="range" id="slider-r" min="0" max="255" value="52" class="color-slider slider-red">
+              </div>
+              <div class="slider-row">
+                <span class="slider-tag green">G: <span id="val-g">129</span></span>
+                <input type="range" id="slider-g" min="0" max="255" value="129" class="color-slider slider-green">
+              </div>
+              <div class="slider-row">
+                <span class="slider-tag blue">B: <span id="val-b">184</span></span>
+                <input type="range" id="slider-b" min="0" max="255" value="184" class="color-slider slider-blue">
+              </div>
+            </div>
+          </div>
+
+          <!-- RAL Catalog Search -->
+          <div class="ral-search-section">
+            <div class="section-title-row">
+              <h3>RAL Classic Farbfächer (~213 Farben)</h3>
+            </div>
+            
+            <div class="search-input-wrap">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" id="ral-search-input" placeholder="Nach RAL-Nummer oder Name suchen (z.B. 7016, Blau, Gelb)...">
+              <button id="btn-clear-search" class="clear-search-btn" style="display: none;">&times;</button>
+            </div>
+
+            <!-- Quick Filter Chips -->
+            <div class="filter-chips-scroll">
+              <button class="chip active" data-filter="all">Alle</button>
+              <button class="chip" data-filter="1">1xxx Gelb</button>
+              <button class="chip" data-filter="2">2xxx Orange</button>
+              <button class="chip" data-filter="3">3xxx Rot</button>
+              <button class="chip" data-filter="4">4xxx Violett</button>
+              <button class="chip" data-filter="5">5xxx Blau</button>
+              <button class="chip" data-filter="6">6xxx Grün</button>
+              <button class="chip" data-filter="7">7xxx Grau</button>
+              <button class="chip" data-filter="8">8xxx Braun</button>
+              <button class="chip" data-filter="9">9xxx Weiß/Schwarz</button>
+            </div>
+
+            <!-- RAL Colors Grid -->
+            <div id="ral-list-grid" class="ral-grid">
+              <!-- Dynamisch gerendert -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SAVED COLORS VIEW ================= -->
+      <section id="view-saved" class="view-panel">
+        <div class="saved-card">
+          <div class="saved-header">
+            <div>
+              <h3>Gespeicherte Farbtöne</h3>
+              <p class="text-muted">Deine gemessenen Farbtöne und Projekte</p>
+            </div>
+            <div class="saved-header-actions">
+              <button id="btn-export-saved" class="btn btn-ghost btn-sm" title="Liste exportieren">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                  <polyline points="16 6 12 2 8 6"/>
+                  <line x1="12" y1="2" x2="12" y2="15"/>
+                </svg>
+                Teilen
+              </button>
+              <button id="btn-clear-saved" class="btn btn-ghost btn-sm text-danger" title="Alle löschen">
+                Löschen
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty list state -->
+          <div id="saved-empty-state" class="saved-empty-state">
+            <div class="empty-icon">🎨</div>
+            <h4>Noch keine Farben gespeichert</h4>
+            <p>Scanne eine Farbe mit der Kamera oder wähle ein Foto und tippe auf "Speichern".</p>
+            <button class="btn btn-primary btn-sm" onclick="App.switchTab('camera')">
+              Jetzt Farbe scannen
+            </button>
+          </div>
+
+          <!-- List container -->
+          <div id="saved-list-container" class="saved-list-container" style="display: none;">
+            <!-- Dynamisch befüllt -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= COLOR INSPECTOR / DETAIL CARD (ALWAYS PRESENT) ================= -->
+      <section id="color-detail-section" class="color-detail-section">
+        <div class="detail-card">
+          <!-- Main Color Banner -->
+          <div class="detail-banner" id="detail-banner">
+            <div class="banner-color-preview" id="detail-color-swatch">
+              <span class="preview-tag" id="detail-temperature-badge">❄️ Kühl</span>
+            </div>
+            <div class="banner-info">
+              <div class="banner-title-row">
+                <h2 id="detail-color-name" class="detail-name">Lichtblau</h2>
+                <button id="btn-speak-color" class="icon-btn-round" title="Farbe vorlesen">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                  </svg>
+                </button>
+              </div>
+              <p id="detail-natural-desc" class="detail-desc">Klares, leuchtendes Himmelblau / Azur</p>
+              
+              <div class="ral-badge-row">
+                <span class="ral-badge" id="detail-ral-tag">RAL 5012 Lichtblau</span>
+                <span class="match-score" id="detail-match-score">99% Übereinstimmung</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Side-by-Side Comparison Swatches -->
+          <div class="comparison-row">
+            <div class="compare-item">
+              <div class="compare-swatch" id="compare-measured"></div>
+              <div class="compare-label">Gemessen</div>
+            </div>
+            <div class="compare-vs">
+              <span>ΔE</span>
+              <strong id="compare-delta-e">0.0</strong>
+            </div>
+            <div class="compare-item">
+              <div class="compare-swatch" id="compare-ral"></div>
+              <div class="compare-label" id="compare-ral-label">RAL 5012</div>
+            </div>
+          </div>
+
+          <!-- Color Codes Table with 1-Tap Copy -->
+          <div class="codes-grid">
+            <div class="code-box" data-format="hex">
+              <span class="code-type">HEX</span>
+              <span class="code-val" id="code-hex">#3481B8</span>
+              <button class="copy-btn" title="HEX kopieren">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="code-box" data-format="rgb">
+              <span class="code-type">RGB</span>
+              <span class="code-val" id="code-rgb">52, 129, 184</span>
+              <button class="copy-btn" title="RGB kopieren">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="code-box" data-format="hsl">
+              <span class="code-type">HSL</span>
+              <span class="code-val" id="code-hsl">205°, 56%, 46%</span>
+              <button class="copy-btn" title="HSL kopieren">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="code-box" data-format="cmyk">
+              <span class="code-type">CMYK</span>
+              <span class="code-val" id="code-cmyk">72, 30, 0, 28</span>
+              <button class="copy-btn" title="CMYK kopieren">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Detail Action Buttons -->
+          <div class="detail-actions-row">
+            <button id="btn-save-current" class="btn btn-primary btn-block">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              </svg>
+              Farbe speichern
+            </button>
+            <button id="btn-share-current" class="btn btn-secondary">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"/>
+                <circle cx="6" cy="12" r="3"/>
+                <circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              Teilen
+            </button>
+          </div>
+
+          <!-- Color Harmonies / Palettes -->
+          <div class="harmonies-section">
+            <h3 class="section-title">Harmonische Farbkombinationen</h3>
+            <p class="section-sub">Tippe auf eine Farbe, um sie als Farbton zu laden.</p>
+            
+            <div id="harmonies-container" class="harmonies-container">
+              <!-- Dynamisch gerendert -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Info / Tips Modal -->
+    <div id="modal-info" class="modal-backdrop" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Tipps für perfekte Farberkennung</h3>
+          <button id="btn-close-modal" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="tip-item">
+            <span class="tip-icon">☀️</span>
+            <div>
+              <strong>Gleichmäßiges Tageslicht</strong>
+              <p>Messe am besten bei natürlichem, indirektem Licht. Direktes grelles Sonnenlicht oder farbige Lampen verfälschen das Ergebnis.</p>
+            </div>
+          </div>
+          <div class="tip-item">
+            <span class="tip-icon">✨</span>
+            <div>
+              <strong>Glanzstellen & Reflexionen meiden</strong>
+              <p>Halte das Smartphone leicht schräg (ca. 45°), um Lichtreflexe auf glänzenden Lacken oder glatten Oberflächen zu vermeiden.</p>
+            </div>
+          </div>
+          <div class="tip-item">
+            <span class="tip-icon">🎯</span>
+            <div>
+              <strong>Messpunkt & Mittelwert nutzen</strong>
+              <p>Nutze bei unebenen Wänden oder Textilien den "5px Mittel"-Modus, um Bildrauschen der Smartphone-Kamera auszugleichen.</p>
+            </div>
+          </div>
+          <div class="tip-item">
+            <span class="tip-icon">⏸️</span>
+            <div>
+              <strong>Bild anhalten</strong>
+              <p>Nutze die Pause-Taste, um das Kamerabild einzufrieren und ganz in Ruhe den perfekten Farbpunkt auszuwählen.</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-modal-ok" class="btn btn-primary btn-block">Verstanden</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Note Dialog Modal -->
+    <div id="modal-save" class="modal-backdrop" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Farbton speichern</h3>
+          <button id="btn-close-save-modal" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="save-color-banner" id="save-modal-swatch">
+            <span id="save-modal-name">Farbe</span>
+          </div>
+          <label class="form-label" for="save-input-note">Projekt / Notiz (optional):</label>
+          <input type="text" id="save-input-note" class="text-input" placeholder="z.B. Wohnzimmer Nordwand, Auto-Lack...">
+        </div>
+        <div class="modal-footer">
+          <button id="btn-confirm-save" class="btn btn-primary btn-block">In Verlauf sichern</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Popup -->
+    <div id="toast" class="toast"></div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/ral-data.js"></script>
+  <script src="js/color-math.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(console.error);
+      });
+    }
+  </script>
+</body>
+</html>
