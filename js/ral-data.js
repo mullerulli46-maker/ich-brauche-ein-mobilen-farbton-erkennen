@@ -1,5 +1,5 @@
 // Offizielle RAL Classic Farbpalette und deutsche Standard-Farbtöne
-window.RAL_COLORS = [
+(typeof globalThis !== "undefined" ? globalThis : window).RAL_COLORS = [
   {
     "code": "RAL 1000",
     "name": "Grünbeige",
@@ -2122,7 +2122,7 @@ window.RAL_COLORS = [
   }
 ];
 
-window.COMMON_COLORS = [
+(typeof globalThis !== "undefined" ? globalThis : window).COMMON_COLORS = [
   {
     "name": "Reines Weiß",
     "hex": "#FFFFFF",
@@ -2727,3 +2727,10 @@ window.COMMON_COLORS = [
     ]
   }
 ];
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    RAL_COLORS: (typeof globalThis !== "undefined" ? globalThis : window).RAL_COLORS,
+    COMMON_COLORS: (typeof globalThis !== "undefined" ? globalThis : window).COMMON_COLORS
+  };
+}
