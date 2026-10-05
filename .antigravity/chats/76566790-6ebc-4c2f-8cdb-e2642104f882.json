@@ -40,6 +40,18 @@
       "created_at": "2026-10-05T06:47:26.669Z",
       "sender": "ios",
       "is_cancelled": true
+    },
+    {
+      "id": "eaa46600-1706-4245-a580-172db06b4945",
+      "role": "user",
+      "content": "Ok also das ist schon nicht schlecht und wir können es behalten aber kannst du es nochmal machen und ich will eben nur den schwarz Anteil und weiß Anteil in Prozent und das du halt ein gespeichertes Bild oder ein kopiertes Bild hochladen kannst aber auch ein Bild aufnehmen kannst und das man dann die Stelle anklickt und dann kommt kurz so analysiert aber auf englisch mit so einem Ladekreis und dann kommt eben der Balken mit den Prozent Angaben also zb wenn man einfach komplett schwarz nimmt dann kommt eben 100% schwarz und 0 weiß und dann am besten kann man seine Bilder mit den Prozent speichern und sich mit seinen Freunden Battlen also bei 100% schwarz kriegt man 1000 Punkte und dann eben bei 1% Hundert und immer so weiter und je mehr Punkte man hat oder also ge dunkler es ist desto höher wird man geranked",
+      "status": "cancelled",
+      "model": "gemini-3.8-flash-high",
+      "client_type": "gemini-bridge",
+      "parent_message_id": null,
+      "created_at": "2026-10-05T06:49:16.615Z",
+      "sender": "ios",
+      "is_cancelled": true
     }
   ]
 }
